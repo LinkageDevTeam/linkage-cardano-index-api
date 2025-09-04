@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  cardano-index-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cardano-index-api
+    ports:
+      - "8000:8000"
+    environment:
+      - CARDANO_INDEX_API_KEYS=demo-api-key-please-change,your-production-key
+      - CARDANO_INDEX_DEBUG=false
+      - CARDANO_INDEX_DATABASE_URL=sqlite:///./data/cardano_index_data.db
+      - CARDANO_INDEX_QUERIER_ENABLED=true
+      - CARDANO_INDEX_QUERIER_INTERVAL_MINUTES=15
+      - CARDANO_INDEX_QUERIER_STARTUP_DELAY_SECONDS=30
+    volumes:
+      - ./config:/app/config:ro
+      - cardano-index-data:/app/data  # Persistent database storage
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s  # Increased for database initialization
+
+  # Optional: PostgreSQL for production (more robust than SQLite)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: cardano-index-postgres
+  #   environment:
+  #     - POSTGRES_DB=cardano_index
+  #     - POSTGRES_USER=cardano
+  #     - POSTGRES_PASSWORD=changeme
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+  # For production with PostgreSQL, update the API service:
+  # cardano-index-api:
+  #   ...
+  #   environment:
+  #     - CARDANO_INDEX_DATABASE_URL=postgresql://cardano:changeme@postgres:5432/cardano_index
+  #   depends_on:
+  #     - postgres
+
+  # Optional: Add a reverse proxy for production
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: cardano-index-nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #   depends_on:
+  #     - cardano-index-api
+  #   restart: unless-stopped
+
+volumes:
+  cardano-index-data:  # Named volume for database persistence
+  # postgres-data:     # Uncomment if using PostgreSQL
+
+networks:
+  default:
+    name: cardano-index-network

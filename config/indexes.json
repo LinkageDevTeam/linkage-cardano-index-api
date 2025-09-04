@@ -1,0 +1,102 @@
+{
+  "indexes": [
+    {
+      "id": "cardano-defi",
+      "name": "Cardano DeFi Index",
+      "description": "A weighted index tracking the top DeFi tokens in the Cardano ecosystem",
+      "category": "defi",
+      "methodology": "Market cap weighted index of leading Cardano DeFi protocols",
+      "base_value": 100.0,
+      "created_at": "2025-01-01T00:00:00",
+      "updated_at": "2025-01-01T00:00:00",
+      "tokens": [
+        {
+          "name": "MILK",
+          "policy_id": "afbe91c0b44b3040e360057bf8354ead8c49c4979ae6ab7c4fbdc9eb",
+          "token_name": "4d494c4b7632",
+          "weight": 0.4,
+          "description": "MuesliSwap governance token"
+        },
+        { 
+          "name": "MIN",
+          "policy_id": "29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c6",
+          "token_name": "4d494e",
+          "weight": 0.3,
+          "description": "Minswap decentralized exchange token"
+        },
+        {
+          "name": "SUNDAE",
+          "policy_id": "9a9693a9a37912a5097918f97918d15240c92ab729a0b7c4aa144d77",
+          "token_name": "53554e444145",
+          "weight": 0.3,
+          "description": "SundaeSwap decentralized exchange token"
+        }
+      ]
+    },
+    {
+      "id": "cardano-gaming",
+      "name": "Cardano Meme Index",
+      "description": "Index tracking meme and NFT projects on Cardano",
+      "category": "meme",
+      "methodology": "Equal weighted index of major Cardano meme tokens",
+      "base_value": 100.0,
+      "created_at": "2025-01-01T00:00:00",
+      "updated_at": "2025-01-01T00:00:00",
+      "tokens": [
+        {
+          "name": "HOSKY",
+          "policy_id": "a0028f350aaabe0545fdcb56b039bfb08e4bb4d8c4d7c3c7d481c235",
+          "token_name": "484f534b59",
+          "weight": 0.5,
+          "description": "Popular memecoin in the Cardano ecosystem"
+        },
+        {
+          "name": "CLAY",
+          "policy_id": "40fa2aa67258b4ce7b5782f74831d46a84c59a0ff0c28262fab21728",
+          "token_name": "434c4159",
+          "weight": 0.5,
+          "description": "Clay Nation NFT ecosystem token"
+        }
+      ]
+    },
+    {
+      "id": "cardano-top5-dynamic",
+      "name": "Cardano Top 5 Dynamic Index",
+      "description": "Dynamically selected top 5 Cardano tokens by market cap with minimum 100 ADA volume",
+      "category": "market-cap",
+      "methodology": "Market capitalization weighted index with dynamic token selection, rebalanced daily",
+      "index_type": "dynamic",
+      "base_value": 100.0,
+      "created_at": "2025-01-01T00:00:00",
+      "updated_at": "2025-01-01T00:00:00",
+      "dynamic_criteria": {
+        "selection_method": "market_cap",
+        "limit": 5,
+        "min_volume_ada": 100.0,
+        "weighting_method": "market_cap",
+        "rebalance_frequency": "daily",
+        "exclude_tokens": []
+      }
+    },
+    {
+      "id": "cardano-defi-dynamic",
+      "name": "Cardano DeFi Dynamic Index",
+      "description": "Dynamically selected DeFi tokens from Cardano ecosystem with market cap weighting",
+      "category": "defi",
+      "methodology": "Market cap weighted index of DeFi tokens with minimum 500 ADA volume",
+      "index_type": "dynamic",
+      "base_value": 100.0,
+      "created_at": "2025-01-01T00:00:00",
+      "updated_at": "2025-01-01T00:00:00",
+      "dynamic_criteria": {
+        "selection_method": "market_cap",
+        "limit": 8,
+        "min_volume_ada": 500.0,
+        "weighting_method": "market_cap",
+        "rebalance_frequency": "daily",
+        "include_categories": ["2"],
+        "exclude_tokens": ["BOTLY", "SUE"]
+      }
+    }
+  ]
+}
