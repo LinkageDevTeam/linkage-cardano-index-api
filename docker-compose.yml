@@ -9,7 +9,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - CARDANO_INDEX_API_KEYS=demo-api-key-please-change,your-production-key
+      - CARDANO_INDEX_API_KEYS=["demo-api-key-please-change", "your-production-key"]
       - CARDANO_INDEX_DEBUG=false
       - CARDANO_INDEX_DATABASE_URL=sqlite:///./data/cardano_index_data.db
       - CARDANO_INDEX_QUERIER_ENABLED=true
