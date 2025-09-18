@@ -25,8 +25,9 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy application code
 COPY . .
 
-# Create a non-root user
+# Create a non-root user and data directory
 RUN useradd --create-home --shell /bin/bash cardano \
+    && mkdir -p /app/data \
     && chown -R cardano:cardano /app
 USER cardano
 
