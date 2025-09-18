@@ -57,13 +57,17 @@ class MuesliswapService:
         Fetch tokens from Muesliswap list API.
         
         Args:
-            limit: Number of tokens to fetch
+            limit: Number of tokens to fetch (must be 10, 20, 50, or 100)
             offset: Offset for pagination
             sort_by: Sort field ('marketCap', 'volume', etc.)
             
         Returns:
             MuesliswapTokenListResponse: Parsed response with token data (normalized)
         """
+        # Validate limit parameter
+        allowed_limits = [10, 20, 50, 100]
+        if limit not in allowed_limits:
+            raise ValueError(f"Limit must be one of {allowed_limits}, got {limit}")
         url = f"{self.base_url}/list/v2"
         params = {
             "base-policy-id": "",
@@ -202,7 +206,10 @@ class MuesliswapService:
             sort_by = "marketCap" if criteria.selection_method == "market_cap" else "volume"
             
             # Fetch tokens (get more than needed for filtering)
-            fetch_limit = min(criteria.limit * 3, 100)  # Fetch 3x to account for filtering
+            # MuesliSwap API only accepts limits of 10, 20, 50, 100
+            desired_limit = min(criteria.limit * 3, 100)
+            allowed_limits = [10, 20, 50, 100]
+            fetch_limit = min([limit for limit in allowed_limits if limit >= desired_limit], default=100)
             token_response = await self.get_token_list(
                 limit=fetch_limit, 
                 offset=0, 
@@ -289,7 +296,7 @@ class MuesliswapService:
                     "base-policy-id": "", 
                     "base-tokenname": "",
                     "verified": "true",
-                    "limit": 1,
+                    "limit": 10,  # Use minimum allowed limit
                     "offset": 0
                 })
                 return response.status_code == 200
