@@ -1,0 +1,44 @@
+[
+  {
+    "fund_id": "fund001",
+    "name": "Cardano DeFi Index Fund",
+    "tokens": [
+      "afbe91c0b44b3040e360057bf8354ead8c49c4979ae6ab7c4fbdc9eb4d494c4b7632",
+      "29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c64d494e"
+    ],
+    "factors": [40, 30],
+    "creator": "abc123def456",
+    "fund_factor": 1000000,
+    "royalty_factor": 30,
+    "tx": "abc123...#0",
+    "created_at": "2025-01-10T10:00:00"
+  },
+  {
+    "fund_id": "fund002",
+    "name": "Gaming Token Index",
+    "tokens": [
+      "a0028f350aaabe0545fdcb56b039bfb08e4bb4d8c4d7c3c7d481c235484f534b59",
+      "279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f534e454b"
+    ],
+    "factors": [50, 50],
+    "creator": "xyz789ghi012",
+    "fund_factor": 500000,
+    "royalty_factor": 25,
+    "tx": "def456...#0",
+    "created_at": "2025-01-12T14:30:00"
+  },
+  {
+    "fund_id": "fund003",
+    "name": "Stablecoin Index",
+    "tokens": [
+      "afbe91c0b44b3040e360057bf8354ead8c49c4979ae6ab7c4fbdc9eb4d494c4b7632"
+    ],
+    "factors": [100],
+    "creator": "mno345pqr678",
+    "fund_factor": 2000000,
+    "royalty_factor": 20,
+    "tx": "ghi789...#0",
+    "created_at": "2025-01-15T09:15:00"
+  }
+]
+

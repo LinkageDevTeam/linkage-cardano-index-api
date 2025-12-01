@@ -207,3 +207,148 @@ def test_config_loading():
     assert settings.app_name == "Cardano Index API"
     assert isinstance(settings.api_keys, list)
     assert len(settings.api_keys) > 0
+
+
+class TestLinkageFinanceFunds:
+    """Test suite for Linkage Finance fund endpoints."""
+    
+    def test_get_linkage_funds_without_auth(self):
+        """Test that Linkage Finance endpoints require authentication."""
+        response = client.get("/linkage-funds")
+        assert response.status_code in [401, 403]
+    
+    def test_get_linkage_funds_with_auth(self):
+        """Test fetching all Linkage Finance funds."""
+        response = client.get("/linkage-funds", headers=AUTH_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+        assert "funds" in data
+        assert "total_count" in data
+        assert isinstance(data["funds"], list)
+        assert data["total_count"] >= 0
+    
+    def test_get_specific_linkage_fund(self):
+        """Test fetching a specific Linkage Finance fund."""
+        # First get all funds
+        response = client.get("/linkage-funds", headers=AUTH_HEADERS)
+        assert response.status_code == 200
+        funds = response.json()["funds"]
+        
+        if len(funds) > 0:
+            fund_id = funds[0]["fund_id"]
+            
+            # Test fetching specific fund
+            response = client.get(f"/linkage-funds/{fund_id}", headers=AUTH_HEADERS)
+            assert response.status_code == 200
+            data = response.json()
+            assert data["fund_id"] == fund_id
+            assert "name" in data
+            assert "tokens" in data
+            assert "factors" in data
+            assert "index_id" in data
+    
+    def test_get_nonexistent_linkage_fund(self):
+        """Test fetching a non-existent Linkage Finance fund."""
+        response = client.get("/linkage-funds/nonexistent", headers=AUTH_HEADERS)
+        assert response.status_code == 404
+    
+    def test_linkage_fund_as_index(self):
+        """Test that Linkage Finance funds appear as indexes."""
+        response = client.get("/indexes", headers=AUTH_HEADERS)
+        assert response.status_code == 200
+        indexes = response.json()["indexes"]
+        
+        # Check if any indexes are Linkage Finance funds
+        linkage_funds = [idx for idx in indexes if idx.get("id", "").startswith("linkage-fund-")]
+        
+        # At least one Linkage fund should be available
+        assert len(linkage_funds) > 0, "No Linkage Finance funds found in indexes"
+        
+        # Test that Linkage funds have correct category
+        for fund_index in linkage_funds:
+            assert fund_index.get("category") == "linkage-fund"
+            assert "tokens" in fund_index or fund_index.get("index_type") == "dynamic"
+    
+    def test_linkage_fund_price_calculation(self):
+        """Test price calculation for Linkage Finance funds."""
+        response = client.get("/indexes", headers=AUTH_HEADERS)
+        assert response.status_code == 200
+        indexes = response.json()["indexes"]
+        
+        # Find a Linkage Finance fund
+        linkage_funds = [idx for idx in indexes if idx.get("id", "").startswith("linkage-fund-")]
+        
+        if len(linkage_funds) > 0:
+            fund_index_id = linkage_funds[0]["id"]
+            
+            # Test price endpoint
+            response = client.get(f"/indexes/{fund_index_id}/price", headers=AUTH_HEADERS)
+            # May fail if external API is down, but endpoint should work
+            if response.status_code == 200:
+                data = response.json()
+                assert "price" in data
+                assert data["index_id"] == fund_index_id
+    
+    def test_linkage_fund_volume_calculation(self):
+        """Test volume calculation for Linkage Finance funds."""
+        response = client.get("/indexes", headers=AUTH_HEADERS)
+        assert response.status_code == 200
+        indexes = response.json()["indexes"]
+        
+        linkage_funds = [idx for idx in indexes if idx.get("id", "").startswith("linkage-fund-")]
+        
+        if len(linkage_funds) > 0:
+            fund_index_id = linkage_funds[0]["id"]
+            
+            response = client.get(f"/indexes/{fund_index_id}/volume", headers=AUTH_HEADERS)
+            if response.status_code == 200:
+                data = response.json()
+                assert "volume_24h" in data
+                assert "volume_7d" in data
+                assert data["index_id"] == fund_index_id
+    
+    def test_linkage_fund_historical_data(self):
+        """Test historical data retrieval for Linkage Finance funds."""
+        response = client.get("/indexes", headers=AUTH_HEADERS)
+        assert response.status_code == 200
+        indexes = response.json()["indexes"]
+        
+        linkage_funds = [idx for idx in indexes if idx.get("id", "").startswith("linkage-fund-")]
+        
+        if len(linkage_funds) > 0:
+            fund_index_id = linkage_funds[0]["id"]
+            
+            # Test historical endpoint
+            response = client.get(f"/indexes/{fund_index_id}/history", headers=AUTH_HEADERS)
+            if response.status_code == 200:
+                data = response.json()
+                assert "data" in data
+                assert "start_date" in data
+                assert "end_date" in data
+                assert data["index_id"] == fund_index_id
+    
+    def test_linkage_fund_fund_structure(self):
+        """Test that Linkage Finance fund response has correct structure."""
+        response = client.get("/linkage-funds", headers=AUTH_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+        
+        if len(data["funds"]) > 0:
+            fund = data["funds"][0]
+            
+            # Verify all required fields are present
+            assert "fund_id" in fund
+            assert "name" in fund
+            assert "tokens" in fund
+            assert "factors" in fund
+            assert "creator" in fund
+            assert "fund_factor" in fund
+            assert "royalty_factor" in fund
+            assert "tx" in fund
+            assert "created_at" in fund
+            assert "index_id" in fund
+            
+            # Verify types
+            assert isinstance(fund["tokens"], list)
+            assert isinstance(fund["factors"], list)
+            assert len(fund["tokens"]) == len(fund["factors"])

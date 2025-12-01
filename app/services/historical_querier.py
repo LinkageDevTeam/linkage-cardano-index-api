@@ -115,14 +115,24 @@ class HistoricalQuerier:
         errors = []
         
         try:
-            # Get all configured indexes
-            indexes = await self.index_service.load_indexes_config()
+            # Get all configured indexes (including Linkage Finance funds)
+            indexes = await self.index_service.get_all_indexes()
             
             async with self.db_manager.get_session() as session:
                 for index in indexes:
                     try:
                         # Calculate current price data
                         price_data = await self.index_service.calculate_index_price(index.id)
+                        
+                        # Get token count for the index
+                        if index.tokens:
+                            token_count = len(index.tokens)
+                        elif index.is_dynamic:
+                            # For dynamic indexes, get current tokens
+                            current_tokens = await self.index_service.get_index_tokens(index)
+                            token_count = len(current_tokens)
+                        else:
+                            token_count = 0
                         
                         # Store historical price record
                         historical_record = HistoricalIndexPrice(
@@ -133,7 +143,7 @@ class HistoricalQuerier:
                             volume_24h=getattr(price_data, 'volume_24h', 0.0),
                             price_change_24h=price_data.price_change_24h,
                             price_change_7d=price_data.price_change_7d,
-                            token_count=len(index.tokens) if index.tokens else 0,
+                            token_count=token_count,
                             index_type=index.index_type,
                             calculation_successful=True
                         )

@@ -10,6 +10,8 @@ This API helps you:
 - Check trading volume information
 - Track both manual (static) and automated (dynamic) indexes
 - Automatically select top tokens by market cap or volume
+- Track Linkage Finance funds created by users
+- Verify data accuracy and consistency with automated tools
 
 ## Two Index Types: Static vs Dynamic
 
@@ -76,6 +78,16 @@ Authorization: Bearer your-api-key-here
 4. **Get volume data:**
    ```
    GET /indexes/cardano-defi/volume
+   ```
+
+5. **Get all Linkage Finance funds:**
+   ```
+   GET /linkage-funds
+   ```
+
+6. **Get specific Linkage Finance fund:**
+   ```
+   GET /linkage-funds/{fund_id}
    ```
 
 ### Example Response
@@ -176,20 +188,66 @@ CARDANO_INDEX_DEBUG=false
 CARDANO_INDEX_CACHE_TTL_SECONDS=300
 ```
 
-## Testing
+## Linkage Finance Funds Integration
 
-Run the tests to make sure everything works:
+The API now automatically tracks all Linkage Finance funds created by users through smart contracts. These funds are:
+
+- Fetched from Linkage Finance smart contracts
+- Converted to index format and served through the API
+- Included in historical data collection
+- Available through both `/linkage-funds` and `/indexes` endpoints
+
+**Linkage Finance Fund Endpoints:**
+- `GET /linkage-funds` - List all user-created funds
+- `GET /linkage-funds/{fund_id}` - Get details for a specific fund
+- Linkage funds also appear in `GET /indexes` with IDs prefixed with `linkage-fund-`
+
+Funds are stored in `data/linkage_funds.json` and are automatically loaded when the API starts.
+
+## Testing and Data Verification
+
+### Running Tests
 
 ```bash
 # Install test dependencies
 pip install pytest pytest-asyncio
 
-# Run tests
+# Run all tests
 pytest
+
+# Run specific test suites
+pytest tests/test_api.py
+pytest tests/test_linkage_funds.py
 
 # Run with coverage
 pytest --cov=app tests/
 ```
+
+### Data Verification Tool
+
+Verify data accuracy and consistency automatically:
+
+```bash
+python tools/verify_data.py
+```
+
+This tool checks:
+- Index metadata consistency
+- Price calculation accuracy
+- Historical data integrity
+- Linkage Finance funds validation
+
+Results are saved to a JSON report file.
+
+### Backtest Data Generator
+
+Generate historical test data for backtesting API changes:
+
+```bash
+python tools/backtest_data.py
+```
+
+This generates realistic historical price data for all indexes and exports it for testing. See `tools/README.md` for detailed documentation.
 
 ## How It Works
 
@@ -212,6 +270,11 @@ The API comes with sample indexes:
 **Dynamic Indexes:**
 - `cardano-top5-dynamic` - Top 5 by market cap, min 100 ADA volume
 - `cardano-defi-dynamic` - Auto-selected DeFi tokens, min 500 ADA volume
+
+**Linkage Finance Funds:**
+- All user-created funds from Linkage Finance smart contracts
+- Automatically tracked and converted to index format
+- Example IDs: `linkage-fund-fund001`, `linkage-fund-fund002`, etc.
 
 ## API Documentation
 
@@ -259,10 +322,14 @@ This is an open-source project. Feel free to:
 ├── app/                 # Application code
 │   ├── core/           # Configuration and auth
 │   ├── models/         # Data models  
-│   ├── routers/        # API endpoints
-│   └── services/       # Business logic
+│   ├── routers/        # API endpoints (including linkage_funds)
+│   └── services/       # Business logic (including linkage_finance)
 ├── config/             # JSON configuration files
+├── data/               # Data files and Linkage Finance funds storage
+├── tools/              # Data verification and backtesting tools
 ├── tests/              # Test files
 ├── main.py            # Application entry point
 └── requirements.txt   # Python dependencies
 ```
+
+See `tools/README.md` for detailed documentation on testing and verification tools.

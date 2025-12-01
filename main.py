@@ -12,7 +12,7 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from app.routers import indexes
+from app.routers import indexes, linkage_funds
 from app.core.config import get_settings
 from app.core.auth import verify_api_key
 from app.db.database import get_db_manager
@@ -91,6 +91,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(indexes.router, prefix="/indexes", tags=["indexes"])
+app.include_router(linkage_funds.router, prefix="/linkage-funds", tags=["linkage-funds"])
 
 @app.get("/")
 async def root():

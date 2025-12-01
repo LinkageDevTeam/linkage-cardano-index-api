@@ -15,6 +15,7 @@ from app.models.schemas import (
 )
 from typing import Dict
 from app.services.muesliswap import MuesliswapService
+from app.services.linkage_finance import LinkageFinanceService
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ class IndexService:
     def __init__(self):
         self.settings = get_settings()
         self.muesliswap = MuesliswapService()
+        self.linkage_finance = LinkageFinanceService()
         self._cache: Dict = {}
         self._cache_timestamps: Dict = {}
         
@@ -81,8 +83,18 @@ class IndexService:
             raise Exception(f"Config loading error: {e}")
     
     async def get_all_indexes(self) -> List[IndexMetadata]:
-        """Get all configured indexes."""
-        return await self.load_indexes_config()
+        """Get all configured indexes, including Linkage Finance funds."""
+        static_indexes = await self.load_indexes_config()
+        
+        # Fetch Linkage Finance funds as indexes
+        try:
+            linkage_funds = await self.linkage_finance.get_funds_as_indexes()
+            logger.info(f"Loaded {len(linkage_funds)} Linkage Finance funds as indexes")
+            return static_indexes + linkage_funds
+        except Exception as e:
+            logger.error(f"Failed to load Linkage Finance funds: {e}")
+            # Return static indexes even if Linkage Finance fails
+            return static_indexes
     
     async def get_index_by_id(self, index_id: str) -> Optional[IndexMetadata]:
         """
@@ -94,10 +106,19 @@ class IndexService:
         Returns:
             IndexMetadata: The index metadata or None if not found
         """
+        # Check static indexes first
         indexes = await self.load_indexes_config()
         for index in indexes:
             if index.id == index_id:
                 return index
+        
+        # Check Linkage Finance funds
+        if index_id.startswith("linkage-fund-"):
+            fund_id = index_id.replace("linkage-fund-", "")
+            fund = await self.linkage_finance.get_fund_by_id(fund_id)
+            if fund:
+                return fund.to_index_metadata()
+        
         return None
     
     def _is_cache_valid(self, cache_key: str) -> bool:
