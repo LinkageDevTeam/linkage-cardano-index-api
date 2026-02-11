@@ -21,6 +21,19 @@ class MuesliswapService:
         self.settings = get_settings()
         self.base_url = self.settings.muesliswap_base_url
         self.timeout = self.settings.muesliswap_timeout
+        self._client: Optional[httpx.AsyncClient] = None
+    
+    async def _get_client(self) -> httpx.AsyncClient:
+        """Get or create a shared HTTP client for connection reuse."""
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=self.timeout)
+        return self._client
+    
+    async def close(self) -> None:
+        """Close the shared HTTP client. Call from app shutdown if desired."""
+        if self._client is not None and not self._client.is_closed:
+            await self._client.aclose()
+            self._client = None
     
     @staticmethod
     def normalize_price(price: float, quote_decimal_places: int, base_decimal_places: int) -> float:
@@ -81,30 +94,25 @@ class MuesliswapService:
         }
         
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(url, params=params)
-                response.raise_for_status()
-                data = response.json()
-                token_response = MuesliswapTokenListResponse(**data)
-                
-                # Normalize price and market cap data for each token
-                for item in token_response.items:
-                    price_data = item.price
-                    
-                    # Normalize price using quote - base decimal places
-                    price_data.price = self.normalize_price(
-                        price_data.price,
-                        price_data.quoteDecimalPlaces,
-                        price_data.baseDecimalPlaces
-                    )
-                    
-                    # Normalize market cap using negative base decimal places
-                    price_data.marketCap = self.normalize_market_cap(
-                        price_data.marketCap,
-                        price_data.baseDecimalPlaces
-                    )
-                
-                return token_response
+            client = await self._get_client()
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            token_response = MuesliswapTokenListResponse(**data)
+            
+            # Normalize price and market cap data for each token
+            for item in token_response.items:
+                price_data = item.price
+                price_data.price = self.normalize_price(
+                    price_data.price,
+                    price_data.quoteDecimalPlaces,
+                    price_data.baseDecimalPlaces
+                )
+                price_data.marketCap = self.normalize_market_cap(
+                    price_data.marketCap,
+                    price_data.baseDecimalPlaces
+                )
+            return token_response
                 
         except httpx.HTTPError as e:
             logger.error(f"Failed to fetch token list from Muesliswap: {e}")
@@ -136,26 +144,23 @@ class MuesliswapService:
         }
         
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(url, params=params)
-                response.raise_for_status()
-                data = response.json()
-                price_data = MuesliswapPriceData(**data)
-                
-                # Normalize price using quote - base decimal places
-                price_data.price = self.normalize_price(
-                    price_data.price,
-                    price_data.quoteDecimalPlaces,
-                    price_data.baseDecimalPlaces
-                )
-                
-                # Normalize market cap using negative base decimal places
-                price_data.marketCap = self.normalize_market_cap(
-                    price_data.marketCap,
-                    price_data.baseDecimalPlaces
-                )
-                
-                return price_data
+            client = await self._get_client()
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            price_data = MuesliswapPriceData(**data)
+            
+            # Normalize price using quote - base decimal places
+            price_data.price = self.normalize_price(
+                price_data.price,
+                price_data.quoteDecimalPlaces,
+                price_data.baseDecimalPlaces
+            )
+            price_data.marketCap = self.normalize_market_cap(
+                price_data.marketCap,
+                price_data.baseDecimalPlaces
+            )
+            return price_data
                 
         except httpx.HTTPError as e:
             logger.error(f"Failed to fetch price for {token.name}: {e}")
@@ -291,14 +296,14 @@ class MuesliswapService:
             bool: True if API is healthy
         """
         try:
-            async with httpx.AsyncClient(timeout=5) as client:
-                response = await client.get(f"{self.base_url}/list/v2", params={
-                    "base-policy-id": "", 
-                    "base-tokenname": "",
-                    "verified": "true",
-                    "limit": 10,  # Use minimum allowed limit
-                    "offset": 0
-                })
-                return response.status_code == 200
-        except:
+            client = await self._get_client()
+            response = await client.get(f"{self.base_url}/list/v2", params={
+                "base-policy-id": "", 
+                "base-tokenname": "",
+                "verified": "true",
+                "limit": 10,  # Use minimum allowed limit
+                "offset": 0
+            })
+            return response.status_code == 200
+        except Exception:
             return False

@@ -521,6 +521,18 @@ This tool checks:
 
 Results are saved to a JSON report file.
 
+### Performance Testing
+
+Throughput and data freshness are tested with two scripts; full methodology and results are in [PERFORMANCE_TESTING_REPORT.md](PERFORMANCE_TESTING_REPORT.md).
+
+```bash
+# Load test (API must be running): concurrent requests, success rate, requests/sec
+python3 -m tools.performance_load_test --concurrent 10 --duration 30
+
+# Freshness test: how old is cached price data (cache_age_seconds)
+python3 -m tools.performance_freshness_test --samples 5
+```
+
 ### Backtest Data Generator
 
 Generate historical test data for backtesting API changes:

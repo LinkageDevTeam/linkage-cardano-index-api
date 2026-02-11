@@ -141,6 +141,10 @@ class IndexService:
         self._cache[cache_key] = data
         self._cache_timestamps[cache_key] = datetime.utcnow()
     
+    async def close(self) -> None:
+        """Close shared resources (e.g. MuesliSwap HTTP client). Call from app shutdown."""
+        await self.muesliswap.close()
+    
     async def get_index_tokens(self, index: IndexMetadata) -> List[TokenInfo]:
         """
         Get tokens for an index (static or dynamic).
@@ -189,7 +193,8 @@ class IndexService:
         cache_key = f"price_{index_id}"
         cached_data = self._get_from_cache(cache_key)
         if cached_data:
-            return cached_data
+            age_seconds = int((datetime.utcnow() - self._cache_timestamps[cache_key]).total_seconds())
+            return cached_data.model_copy(update={"cache_age_seconds": age_seconds})
         
         index = await self.get_index_by_id(index_id)
         if not index:
@@ -204,7 +209,6 @@ class IndexService:
             
             # Fetch prices for all tokens in the index
             token_prices = await self.muesliswap.get_multiple_token_prices(index_tokens)
-            print("token_prices", token_prices)
             
             if not token_prices:
                 raise Exception(f"No price data available for index {index_id}")

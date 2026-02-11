@@ -61,6 +61,7 @@ class PriceData(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Price timestamp")
     price_change_24h: float = Field(default=0.0, description="24-hour price change percentage")
     price_change_7d: float = Field(default=0.0, description="7-day price change percentage")
+    cache_age_seconds: Optional[int] = Field(None, description="Seconds since data was fetched from upstream (present when served from cache)")
 
 class HistoricalPrice(BaseModel):
     """Historical price point."""

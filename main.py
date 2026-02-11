@@ -54,6 +54,13 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("Shutting down Cardano Index API...")
     
+    # Close index service (e.g. MuesliSwap HTTP client)
+    try:
+        await indexes.index_service.close()
+        logger.info("Index service closed")
+    except Exception as e:
+        logger.error(f"Error closing index service: {e}")
+    
     # Stop historical querier
     if settings.querier_enabled:
         try:
